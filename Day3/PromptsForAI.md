@@ -1,6 +1,6 @@
 ## Day 3
 
-### My thinking process and prompts to AI model:
+### My thinking process and prompts to Claude Sonnet 4.5:
 
 #### Prompt 1:
 
@@ -12,7 +12,6 @@ if we look the example output:
 818181911112111
 
 My gut reaction is to just read all the lines and each line return two highest numbers summed together (exactly two numbers), can it be that easy?
-
 
 #### AI Model response 1:
 
@@ -65,12 +64,11 @@ Questions to think about:
 
 Try tracing through Example 4 again more carefully. What pairs of positions give you 92?
 
-
 #### Prompt 2:
 
 1. Position matters.
 2. If the highest digit is at the end, then we would save its position and start reading the string or input from reverse.
-3. In the example input 4. We fould find the 9 in the position 6 and save it, then we find the next one after the 9, but if the highest value is in the end, then we would reverse search the string, 
+3. In the example input 4. We fould find the 9 in the position 6 and save it, then we find the next one after the 9, but if the highest value is in the end, then we would reverse search the string,
    but apply logic that would return the second highest as first and highest as second (because the highest value was last in the string).
 
 #### AI Model Response 2:
@@ -275,8 +273,8 @@ This is much more efficient than brute force checking all pairs. Great problem-s
 
 #### Prompt 5:
 
-I am trying to create a condition that if the highest number is in the end of the string, 
-then I would want to reverse string and find the maximum value and excluding the highest value and its starting point. 
+I am trying to create a condition that if the highest number is in the end of the string,
+then I would want to reverse string and find the maximum value and excluding the highest value and its starting point.
 I know that I have syntax problem or maybe I can't access the second_highest_value properly.
 
 Can you point me into right direction?
@@ -323,10 +321,10 @@ Good progress! But there are a few issues:
 Problems:
 
 1. Edge case check is in the wrong place
-Your check if highest_value == second_highest_value: happens AFTER you've already found second_highest_value by searching left/right. This doesn't actually check if the highest digit appears twice in the string.
+   Your check if highest_value == second_highest_value: happens AFTER you've already found second_highest_value by searching left/right. This doesn't actually check if the highest digit appears twice in the string.
 
 2. The logic doesn't match your algorithm
-You said: "If the two highest digits are the same, return them immediately."
+   You said: "If the two highest digits are the same, return them immediately."
 
 But your code finds the second occurrence by searching, which might not give you the actual second occurrence of the highest digit.
 
@@ -352,7 +350,8 @@ Try this refined version!
 
 #### Prompt 7:
 
-I have a logic error some where. 
+I have a logic error some where.
+
 ('9', 0, '8', 1, 98)
 ('9', 14, '8', 0, 89)
 ('8', 14, '7', 13, 78)
@@ -368,20 +367,149 @@ I see multiple issues! Let me guide you:
 Problems:
 
 1. Logic flow issue
-You're executing BOTH branches (the duplicate check AND the search logic). After finding duplicates, you should return immediately without searching further.
+   You're executing BOTH branches (the duplicate check AND the search logic). After finding duplicates, you should return immediately without searching further.
 
 2. Adding instead of assigning
-You're using sum_result = sum_result + int(...) which means:
+   You're using sum_result = sum_result + int(...) which means:
 
 For 919: First adds 99 when duplicates found, then adds 99 again in the else branch = 198 ❌
 
 3. You're summing inside the function
-The function should return ONE pair value per line, not accumulate sums.
+   The function should return ONE pair value per line, not accumulate sums.
 
 4. Main loop doesn't sum
-Your main doesn't add up all the results from each line.
+   Your main doesn't add up all the results from each line.
 
 Key fix: Use return immediately when you find the answer, don't continue executing. The sum happens in main(), not inside line_to_pairs().
 
+### Part 2:
 
+#### Prompt 8:
 
+My idea would be iterating the max value of string until 12 values have been found, but I would have trouble finding the values from the third example input (234234234234278).
+Because I would start to iterate from the end of the string towards front?
+
+Maybe I need to know the position of the current highest value and then decide if I go right or left of the string?
+
+I think my logic is to find the first highest value and its position, then depending of the position, find the next one and exclude the highest value, then second highest values position iterate left or right, but exclude the highest number and the second highest?
+
+Does this make any sense?
+
+#### AI Model Prompt 8:
+
+Your thinking is on the right track, but let me guide you to refine it:
+
+Your Current Understanding:
+
+✅ You need to select exactly 12 digits (not 2 anymore)
+✅ You want the largest possible 12-digit number
+✅ Order matters (you can't rearrange)
+
+The Key Insight You're Missing:
+You want to KEEP the 12 largest digits, which means you want to REMOVE the smallest digits!
+
+Let's trace through Example 3: 234234234234278
+
+Your confused approach:
+"Start from end, iterate towards front..."
+
+Better way to think:
+The string has 15 digits total. You need 12 digits in the result.
+
+Remove 3 digits (15 - 12 = 3)
+Which 3? The smallest ones!
+But here's the catch: You can't just remove the 3 smallest globally - position matters!
+
+Example 3 breakdown: 234234234234278
+Digits: 2 3 4 2 3 4 2 3 4 2 3 4 2 7 8
+
+If you just remove the three smallest digits (three 2s), you'd get different results depending on WHICH 2s you remove:
+
+Remove positions 0,3,6: 34234234234278 (14 digits - wait, that's wrong!)
+You need to think about this differently...
+
+The Real Algorithm (Greedy approach):
+
+Think of it as building the largest number digit by digit from left to right:
+
+For position 0 of your result, what's the largest digit you can pick?
+
+You must leave enough digits after it to complete 12 total
+If the line has 15 digits and you need 12, you can pick from the first (15-12+1) = 4 digits
+Choose the largest from positions [0,1,2,3]
+For position 1 of your result, what's the largest digit you can pick?
+
+Start searching AFTER where you picked the first digit
+Make sure you can still get 11 more digits after this
+Continue until you have 12 digits
+
+Example trace for 234234234234278:
+
+Length: 15, need 12, so remove 3
+Position 0: Can look at first 4 digits [2,3,4,2], pick max = 4 at index 2
+Position 1: Start after index 2, need 11 more, can look at indices [3,4,5,6], pick max = 4 at index 5
+... continue this process
+Result: 434234234278 ✅
+
+Questions for you:
+How do you determine how far ahead you can look when picking each digit?
+
+Hint: remaining_positions = line_length - current_index
+You need: remaining_positions >= remaining_digits_needed
+Once you pick a digit, where do you start searching for the next one?
+
+Hint: Right after the position you just picked
+This is more complex than Part 1! Do you want to try pseudocoding this algorithm, or do you need more guidance?
+
+#### Prompt 8:
+
+I am just thinking that we have search_window_end = start_search_pos + (remaining_positions - digits_needed + 1).
+In the beginning, start_search pos = 0, remaining position (in the example) = 15, digits_needed = 12 and + 1 because we start from 0 index?
+
+So let say we found our first highest value in index 2 (which is 4), then next start_search_pos = 2, remaining_positions = 13 (15-2 ), digits_needed = (12-1) + 1, everyhing equals to search_window_end?
+
+### AI Model Prompt 8:
+
+You're close, but there's a small confusion! Let me clarify:
+
+Your Understanding:
+
+✅ Correct for Iteration 1:
+
+start_search_pos = 0
+remaining_positions = 15 - 0 = 15
+digits_needed = 12
+search_window_end = 0 + (15 - 12 + 1) = 4
+Search line[0:4], find '4' at index 2 ✅
+
+⚠️ Confusion for Iteration 2:
+
+You said:
+
+"next start_search_pos = 2"
+
+No! It should be start_search_pos = 3 (the position AFTER where you found the digit)
+
+Remember: start_search_pos = max_digit_pos + 1
+
+You found the '4' at position 2, so next search starts at position 3.
+
+Iteration 2 Corrected:
+start_search_pos = 3 (not 2!)
+remaining_positions = 15 - 3 = 12 ✅
+digits_needed = 11 (was 12, now 11) ✅
+search_window_end = 3 + (12 - 11 + 1) = 5 ✅
+Search line[3:5] = "23", find max '3' at index 4
+
+About the + 1:
+
+The + 1 in (remaining_positions - digits_needed + 1) is NOT about zero-indexing. It's about the search window size.
+
+Think about it:
+
+If you need exactly 11 more digits and have exactly 11 positions left
+search_window_end = start + (11 - 11 + 1) = start + 1
+
+This means you can only look at 1 digit (the one at start_search_pos)
+That makes sense - you have no choice, you must take it!
+The +1 ensures the window is at least 1 digit wide.
